@@ -48,5 +48,7 @@ public:
 	BOOL LoadNTDriver(char* lpDriverName, char* lpDriverPathName);
 	BOOL UnLoadSys(char* szSvrName);
 	VOID Refresh();
+	BOOL ServiceStop(char* szSvrName);
+	BOOL ServiceStart(char* szSvrName);
 
 };
