@@ -453,10 +453,9 @@ void CmdctrlDlg::OnBnClickedBtnOpDir()
 
 void CmdctrlDlg::OnBnClickedBtninstall() //保留
 {
-	//tmpServerPath 用于接受从界面的编辑框中提取内容
+	//tmpServerPath 用于接收从界面的编辑框中提取路径名
 	CString tmpServerPath;
 	DriverFilePath.GetWindowText(tmpServerPath);
-	//gms_ServerName 这个是全局的变量 复制的输入有两个 一个是 CListCtrl 界面上鼠标左键单机获取   一个是当打开驱动文件时获取
 	if (tmpServerPath.IsEmpty())
 	{
 		MessageBox(NULL, "请选择驱动文件!", MB_ICONERROR);
