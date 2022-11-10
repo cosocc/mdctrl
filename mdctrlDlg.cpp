@@ -458,8 +458,7 @@ void CmdctrlDlg::OnBnClickedBtninstall() //保留
 	DriverFilePath.GetWindowText(tmpServerPath);
 	if (tmpServerPath.IsEmpty())
 	{
-		MessageBox(NULL, "请选择驱动文件!", MB_ICONERROR);
-
+		MessageBox("请选择驱动文件!", "提示!", MB_OKCANCEL|MB_ICONHAND|MB_ICONSTOP|MB_ICONERROR);
 	}
 	else
 	{
