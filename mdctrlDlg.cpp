@@ -476,6 +476,7 @@ BeforeLeave:
 	return bRet;
 }
 
+
 BOOL CmdctrlDlg::ServiceStart(char* szSvrName)
 {
 	BOOL bRet = FALSE;
@@ -483,7 +484,6 @@ BOOL CmdctrlDlg::ServiceStart(char* szSvrName)
 	SC_HANDLE hServiceMgr = NULL;//SCM管理器的句柄
 	SC_HANDLE hServiceDDK = NULL;//NT驱动程序的服务句柄
 	DWORD dwRtn = 0;
-
 	//打开服务控制管理器
 	hServiceMgr = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
 
