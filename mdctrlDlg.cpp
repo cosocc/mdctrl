@@ -509,8 +509,12 @@ void CmdctrlDlg::OnRclickListDrview(NMHDR* pNMHDR, LRESULT* pResult)
 			}	
 	case 10002://卸载
 			{
-				UnLoadSys(gms_ServerName_from_list.GetBuffer());
-				Refresh();
+				CString hint =  "您确定要删除  "+ gms_ServerName_from_list+"  该服务!";
+				if(IDOK==MessageBox(hint, "提示!", MB_OKCANCEL | MB_ICONEXCLAMATION | MB_ICONWARNING))
+				{ 
+					UnLoadSys(gms_ServerName_from_list.GetBuffer());
+					Refresh();
+				}
 				break;
 			}
 
