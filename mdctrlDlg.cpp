@@ -415,6 +415,123 @@ VOID CmdctrlDlg::Refresh()
 	return;
 }
 
+BOOL CmdctrlDlg::ServiceStop(char* szSvrName)
+{
+	//一定义所用到的变量
+	BOOL bRet = FALSE;
+	SC_HANDLE hSCM = NULL;//SCM管理器的句柄,用来存放OpenSCManager的返回值
+	SC_HANDLE hService = NULL;//NT驱动程序的服务句柄，用来存放OpenService的返回值
+	SERVICE_STATUS SvrSta;
+	//二打开SCM管理器
+	hSCM = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+	if (hSCM == NULL)
+	{
+		//带开SCM管理器失败
+		TRACE("OpenSCManager() Faild %d ! \n", GetLastError());
+		bRet = FALSE;
+		goto BeforeLeave;
+	}
+	else
+	{
+		//打开SCM管理器成功
+		TRACE("OpenSCManager() ok ! \n");
+	}
+	//三打开驱动所对应的服务
+	hService = OpenService(hSCM, szSvrName, SERVICE_ALL_ACCESS);
+
+	if (hService == NULL)
+	{
+		//打开驱动所对应的服务失败 退出
+		TRACE("OpenService() Faild %d ! \n", GetLastError());
+		bRet = FALSE;
+		goto BeforeLeave;
+	}
+	else
+	{
+		TRACE("OpenService() ok ! \n");  //打开驱动所对应的服务 成功
+	}
+	//四停止驱动程序，如果停止失败，只有重新启动才能，再动态加载。  
+	if (!ControlService(hService, SERVICE_CONTROL_STOP, &SvrSta))
+	{
+		TRACE("用ControlService() 停止驱动程序失败 错误号:%d !\n", GetLastError());
+	}
+	else
+	{
+		//停止驱动程序成功
+		TRACE("用ControlService() 停止驱动程序成功 !\n");
+	}
+	//五动态卸载驱动服务。  
+	
+	bRet = TRUE;
+	//六 离开前关闭打开的句柄
+BeforeLeave:
+	if (hService > 0)
+	{
+		CloseServiceHandle(hService);
+	}
+	if (hSCM > 0)
+	{
+		CloseServiceHandle(hSCM);
+	}
+	return bRet;
+}
+
+BOOL CmdctrlDlg::ServiceStart(char* szSvrName)
+{
+	BOOL bRet = FALSE;
+
+	SC_HANDLE hServiceMgr = NULL;//SCM管理器的句柄
+	SC_HANDLE hServiceDDK = NULL;//NT驱动程序的服务句柄
+	DWORD dwRtn = 0;
+	//打开服务控制管理器
+	hServiceMgr = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+
+	if (hServiceMgr == NULL)
+	{
+		//OpenSCManager失败
+		TRACE("OpenSCManager() Faild %d ! \n", GetLastError());
+		bRet = FALSE;
+		goto BExitFlag;
+	}
+	else
+	{
+		////OpenSCManager成功
+		TRACE("OpenSCManager() ok ! \n");
+	}
+	// 驱动程序已经加载，只需要打开  
+	hServiceDDK = OpenService(hServiceMgr, szSvrName, SERVICE_ALL_ACCESS);
+	if (hServiceDDK == NULL)
+	{
+		//如果打开服务也失败，则意味错误
+		dwRtn = GetLastError();
+		TRACE("OpenService() 失败 %d ! \n", dwRtn);
+		bRet = FALSE;
+		goto BExitFlag;
+	}
+	else
+	{
+		TRACE("OpenService() 成功 ! \n");
+	}
+	//开启此项服务
+	bRet = StartService(hServiceDDK, NULL, NULL);
+	if (!bRet)  //开启服务不成功
+	{
+		TRACE("StartService() 失败 服务可能已经开启%d ! \n", dwRtn);
+	}
+	bRet = TRUE;
+	//离开前关闭句柄
+BExitFlag:
+	if (hServiceDDK)
+	{
+		CloseServiceHandle(hServiceDDK);
+	}
+	if (hServiceMgr)
+	{
+		CloseServiceHandle(hServiceMgr);
+	}
+	return bRet;
+}
+
 
 
 void CmdctrlDlg::OnBnClickedWin32()
@@ -492,7 +609,9 @@ void CmdctrlDlg::OnRclickListDrview(NMHDR* pNMHDR, LRESULT* pResult)
 		return;
 	HMENU hMenu = ::CreatePopupMenu();
 	AppendMenu(hMenu, MF_STRING, 10001, _T("刷新"));
-	AppendMenu(hMenu, MF_STRING, 10002, _T("卸载"));
+	AppendMenu(hMenu, MF_STRING, 10002, _T("启动"));
+	AppendMenu(hMenu, MF_STRING, 10003, _T("停止"));
+	AppendMenu(hMenu, MF_STRING, 10004, _T("卸载"));
 
 	CPoint pt;
 	GetCursorPos(&pt); //获得当前鼠标位置
@@ -502,10 +621,26 @@ void CmdctrlDlg::OnRclickListDrview(NMHDR* pNMHDR, LRESULT* pResult)
 	{
 	case 10001://刷新
 			{
+				
 				Refresh();
 				break;
 			}	
-	case 10002://卸载
+
+	case 10002://启动
+			{
+				ServiceStart(gms_ServerName_from_list.GetBuffer());
+				
+				Refresh();
+				break;
+			}
+
+	case 10003://停止
+				{
+					ServiceStop(gms_ServerName_from_list.GetBuffer());
+					Refresh();
+					break;
+				}
+	case 10004://卸载
 			{
 				CString hint =  "您确定要删除  "+ gms_ServerName_from_list+"  该服务!";
 				if(IDOK==MessageBox(hint, "提示!", MB_OKCANCEL | MB_ICONEXCLAMATION | MB_ICONWARNING))
